@@ -1,74 +1,51 @@
-# Telecom: predicción de cancelación de clientes (churn)
+# Telecom - Predicción de cancelación de clientes
 
-Modelo de machine learning que predice qué clientes de un operador de telecomunicaciones van a cancelar su contrato, para que la empresa pueda ofrecerles incentivos de retención antes de que se vayan.
+Proyecto de Machine Learning para predecir qué clientes de una empresa de telecomunicaciones van a cancelar su contrato (churn), para que la empresa pueda ofrecerles promociones antes de que se vayan.
 
-## 📊 Resultados
+## Resultados
 
-| Modelo (conjunto de prueba) | AUC-ROC | F1 | Recall | Precisión | Exactitud |
-|---|---|---|---|---|---|
-| Línea base (`DummyClassifier`) | 0.49 | 0.25 | 0.25 | 0.24 | 0.60 |
-| **XGBoost (umbral 0.40)** | **0.90** | **0.73** | **0.73** | **0.73** | **0.86** |
+El mejor modelo fue **XGBoost** (ajustado con GridSearch y con un umbral de 0.4). Estos son sus resultados con los datos de prueba:
 
-- El modelo detecta **3 de cada 4 clientes que cancelan**, con una precisión del 73 %.
-- Principales factores de riesgo: **contrato mes a mes**, **fibra óptica** y **poca antigüedad** como cliente.
-
-## 🗃️ Datos
-
-Cuatro archivos CSV en `data/raw/`, unidos por `customerID` (7 043 clientes; datos extraídos el 2020-02-01):
-
-| Archivo | Contenido |
+| Métrica | Valor |
 |---|---|
-| `contract.csv` | Fechas de inicio y fin, tipo de contrato, facturación electrónica, método de pago y cargos |
-| `personal.csv` | Género, adulto mayor, pareja y dependientes |
-| `internet.csv` | Tipo de conexión y servicios adicionales (seguridad, backup, soporte técnico, streaming…) |
-| `phone.csv` | Si el cliente tiene varias líneas telefónicas |
+| AUC-ROC | 0.91 |
+| F1 | 0.73 |
+| Recall | 0.73 |
+| Precisión | 0.74 |
 
-La variable objetivo `churn` vale 1 si el cliente tiene fecha de fin de contrato (26.5 % de los clientes).
+El modelo encuentra a 3 de cada 4 clientes que cancelan. Los clientes con más riesgo son los que tienen contrato mes a mes, fibra óptica y poco tiempo con la empresa.
 
-## ⚙️ Metodología
+## Datos
 
-1. **Limpieza y unión** de las cuatro tablas; tratamiento de `TotalCharges` vacíos y de servicios no contratados.
-2. **Ingeniería de características:** antigüedad en meses (calculada con la fecha de corte de los datos), número de servicios adicionales e indicadores de internet y teléfono.
-3. **Análisis exploratorio** de la tasa de cancelación por tipo de contrato, servicio, método de pago y cargos.
-4. **Modelado con `Pipeline`** (escalado + one-hot encoding + modelo), para evitar fugas de datos.
-5. **Comparación con validación cruzada estratificada (5 pliegues)** de regresión logística, Random Forest y XGBoost, con y sin SMOTE, frente a una línea base.
-6. **Ajuste de hiperparámetros** (`RandomizedSearchCV`) y **del umbral de decisión** para maximizar el F1.
-7. **Evaluación final única** en un conjunto de prueba reservado (20 %).
+Cuatro archivos en `data/raw/` que se unen por `customerID` (7043 clientes):
 
-## 📁 Estructura del proyecto
+- `contract.csv`: fechas del contrato, tipo de contrato, método de pago y cargos.
+- `personal.csv`: género, si es adulto mayor, si tiene pareja y dependientes.
+- `internet.csv`: tipo de internet y servicios adicionales (seguridad, backup, soporte, streaming).
+- `phone.csv`: si el cliente tiene varias líneas.
 
-```
-telecom/
-├── data/
-│   └── raw/                 # Datos originales (CSV)
-├── notebooks/
-│   └── telecom_churn.ipynb  # Análisis completo y modelado
-├── requirements.txt         # Dependencias con versiones fijas
-└── README.md
-```
+## Qué hice
 
-## 🚀 Cómo ejecutarlo
+1. Limpié y uní las tablas, y creé variables nuevas como los meses que lleva el cliente y la cantidad de servicios que tiene.
+2. Hice un análisis exploratorio para ver qué tipo de clientes cancela más.
+3. Comparé regresión logística, Random Forest y XGBoost con validación cruzada (con y sin SMOTE) contra un modelo base.
+4. Ajusté XGBoost con GridSearch y elegí el umbral de decisión.
+5. Evalué el modelo final una sola vez con los datos de prueba.
 
-Requisitos: Python 3.11 o superior.
+**Algo que corregí:** en la primera versión usaba una fecha de corte equivocada (2021-02-01 en lugar de 2020-02-01) para calcular la antigüedad de los clientes. Eso hacía que el modelo pareciera mucho mejor de lo que era (F1 de 0.87). Al corregirlo, las métricas bajaron pero ahora son reales.
+
+## Cómo ejecutarlo
 
 ```bash
 git clone https://github.com/dixonpa/telecom.git
 cd telecom
 python -m venv .venv
-# Windows
-.venv\Scripts\activate
-# macOS / Linux
-source .venv/bin/activate
+.venv\Scripts\activate        # en Windows
+source .venv/bin/activate     # en Mac/Linux
 pip install -r requirements.txt
 jupyter notebook notebooks/telecom_churn.ipynb
 ```
 
-## 🛠️ Tecnologías
+## Herramientas
 
-Python · pandas · NumPy · scikit-learn · imbalanced-learn · XGBoost · Matplotlib · seaborn · Jupyter
-
-## 🔭 Próximos pasos
-
-- Validar el modelo con datos de periodos posteriores (todas las cancelaciones del dataset ocurren entre octubre de 2019 y enero de 2020).
-- Calibrar las probabilidades y probar LightGBM o CatBoost.
-- Elegir el umbral según el beneficio económico esperado de las campañas de retención.
+Python, pandas, scikit-learn, XGBoost, imbalanced-learn, matplotlib, seaborn.
